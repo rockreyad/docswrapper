@@ -1,4 +1,5 @@
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 export const Header = () => {
   const { data: sessionData } = useSession();
@@ -14,9 +15,9 @@ export const Header = () => {
             <div className="dropdown-end dropdown">
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
                 <div className="w-10 rounded-full">
-                  <img
-                    src={`${sessionData?.user?.image}`}
-                    alt={`${sessionData?.user?.name}`}
+                  <Image
+                    src={sessionData?.user?.image ?? ""}
+                    alt={sessionData?.user?.name ?? ""}
                   />
                 </div>
               </label>
