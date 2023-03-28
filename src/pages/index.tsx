@@ -1,9 +1,12 @@
 import { type NextPage } from "next";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
+import { useState } from "react";
 import { Header } from "~/components/Header";
+import { NoteCard } from "~/components/NoteCard";
+import { NoteEditor } from "~/components/NoteEditor";
 
-import { api } from "~/utils/api";
+import { api, type RouterOutputs } from "~/utils/api";
 
 const Home: NextPage = () => {
   return (
@@ -23,8 +26,11 @@ const Home: NextPage = () => {
 
 export default Home;
 
+type Doc = RouterOutputs["doc"]["getAll"][0];
+
 const Content: React.FC = () => {
   const { data: sessionData } = useSession();
+  const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
 
   const { data: docs, refetch: refetchDocs } = api.doc.getAll.useQuery(
     undefined, //no input
@@ -33,48 +39,97 @@ const Content: React.FC = () => {
     }
   );
 
+  const { data: notes, refetch: refetchNotes } = api.note.getAll.useQuery(
+    {
+      docId: selectedDoc?.id ?? "",
+    },
+    {
+      enabled: sessionData?.user !== undefined && selectedDoc !== null,
+    }
+  );
+
   const createDoc = api.doc.create.useMutation({
     onSuccess: () => {
       void refetchDocs();
     },
   });
+  const createNote = api.note.create.useMutation({
+    onSuccess: () => {
+      void refetchNotes();
+    },
+  });
+  const deleteNote = api.note.delete.useMutation({
+    onSuccess: () => {
+      void refetchNotes();
+    },
+  });
   return (
     <div className="">
       {sessionData?.user ? (
-        <div className="md:container md:mx-auto">
-          <input
-            type="text"
-            placeholder="Type docs title here..."
-            className="input-bordered input w-full max-w-xs bg-gray-100"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                console.log("createDoc.mutate", createDoc.mutate);
-                createDoc.mutate({
-                  title: e.currentTarget.value,
-                });
-                e.currentTarget.value = "";
-              }
-            }}
-          />
-          <div className="divider"></div>
-          <div className="px-2 ">
-            <h1 className="text-2xl font-bold">Docs</h1>
-            <ul className=" space-y-2 bg-black py-4">
-              {docs &&
-                docs?.map((doc) => (
-                  <li className="w-full" key={doc.id}>
-                    <a
-                      className="w-full rounded-md bg-gray-100 p-2"
-                      href="#"
-                      onClick={(evt) => {
-                        evt.preventDefault();
-                      }}
-                    >
-                      {doc.title}
-                    </a>
-                  </li>
+        <div className="flex justify-between bg-base-200 p-2">
+          <div className="w-1/3">
+            <input
+              type="text"
+              placeholder="Type docs title here..."
+              className="input-bordered input w-full max-w-xs bg-gray-100"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  console.log("createDoc.mutate", createDoc.mutate);
+                  createDoc.mutate({
+                    title: e.currentTarget.value,
+                  });
+                  e.currentTarget.value = "";
+                }
+              }}
+            />
+            <div className="divider"></div>
+            <div className="px-2 ">
+              <h1 className="text-2xl font-bold">Docs</h1>
+              <ul className="space-y-2 py-4">
+                {docs &&
+                  docs?.map((doc) => (
+                    <li className="w-full py-1" key={doc.id}>
+                      <a
+                        className="w-full rounded-md bg-gray-50 p-2 capitalize focus:bg-blue-200 focus:outline-offset-1"
+                        href="#"
+                        onClick={(evt) => {
+                          evt.preventDefault();
+                          setSelectedDoc(doc);
+                        }}
+                      >
+                        {doc.title}
+                      </a>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+          <div className="mx-4 w-full space-y-4 border-l-2 border-l-base-300  px-4 md:container">
+            {notes && notes.length > 0 ? (
+              <div className="space-y-2">
+                {notes?.map((note) => (
+                  <div key={note.id} className="">
+                    <NoteCard
+                      note={note}
+                      onDelete={() => void deleteNote.mutate({ id: note.id })}
+                    />
+                  </div>
                 ))}
-            </ul>
+              </div>
+            ) : (
+              <div className="shadow-x card border border-gray-200 bg-rose-500 p-2 text-base-100">
+                No notes here
+              </div>
+            )}
+            <NoteEditor
+              onSave={({ title, content }) => {
+                void createNote.mutate({
+                  title,
+                  content,
+                  docId: selectedDoc?.id ?? "",
+                });
+              }}
+            />
           </div>
         </div>
       ) : (
@@ -93,7 +148,9 @@ const Content: React.FC = () => {
                 assumenda excepturi exercitationem quasi. In deleniti eaque aut
                 repudiandae et a id nisi.
               </p>
-              <button className="btn-primary btn">Get Started</button>
+              <button onClick={() => void signIn()} className="btn-primary btn">
+                Get Started
+              </button>
             </div>
           </div>
         </div>

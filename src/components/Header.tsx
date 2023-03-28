@@ -5,7 +5,7 @@ export const Header = () => {
 
   return (
     <>
-      <div className="navbar bg-indigo-500">
+      <div className="navbar">
         <div className="flex-1">
           <a className="btn-ghost btn text-xl normal-case">Docs Wrapper</a>
         </div>
@@ -14,7 +14,10 @@ export const Header = () => {
             <div className="dropdown-end dropdown">
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
                 <div className="w-10 rounded-full">
-                  <img src={`${sessionData?.user?.image}`} />
+                  <img
+                    src={`${sessionData?.user?.image}`}
+                    alt={`${sessionData?.user?.name}`}
+                  />
                 </div>
               </label>
               <ul
