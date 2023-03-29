@@ -14,11 +14,13 @@ export const Header = () => {
           {sessionData?.user ? (
             <div className="dropdown-end dropdown">
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
-                <div className="w-10 rounded-full">
-                  <Image
-                    src={sessionData?.user?.image ?? ""}
-                    alt={sessionData?.user?.name ?? ""}
-                  />
+                <div className="avatar">
+                  <div className="w-10 rounded-full">
+                    <img
+                      src={sessionData?.user?.image ?? ""}
+                      alt={sessionData?.user?.name ?? ""}
+                    />
+                  </div>
                 </div>
               </label>
               <ul
